@@ -28,8 +28,7 @@
     </div>
 
     <div id="mainPage">
-      <h1>EC Insulin Unit </h1>
-      <h2>CarbBuddy and Insulin Correction</h2>
+      <h1>EC Carbbuddy</h1>
       <label for="food">Food Item</label>
       <input type="text" id="food" placeholder="e.g., Apple">
 
@@ -41,12 +40,6 @@
 
       <label for="glucose">Current Glucose Level (mmol/L)</label>
       <input type="number" id="glucose" placeholder="e.g., 12">
-
-      <label for="targetLow">Target Glucose Range Low (mmol/L)</label>
-      <input type="number" id="targetLow" placeholder="e.g., 5" value="5" onchange="saveSetting('targetLow')">
-
-      <label for="targetHigh">Target Glucose Range High (mmol/L)</label>
-      <input type="number" id="targetHigh" placeholder="e.g., 10" value="10" onchange="saveSetting('targetHigh')">
 
       <button onclick="addMeal()">Add to Log</button>
       <button onclick="exportLog()">Export Log to CSV</button>
@@ -63,6 +56,9 @@
 
       <label for="isf">Insulin Sensitivity Factor (ISF)</label>
       <input type="number" id="isf" placeholder="e.g., 7" value="7" onchange="saveSetting('isf')">
+
+      <label for="expected">Expected Glucose Level (mmol/L)</label>
+      <input type="number" id="expected" placeholder="e.g., 6" value="6" onchange="saveSetting('expected')">
     </div>
   </div>
 
@@ -83,7 +79,7 @@
     }
 
     function loadSettings() {
-      const keys = ['ratio', 'isf', 'targetLow', 'targetHigh'];
+      const keys = ['ratio', 'isf', 'expected'];
       keys.forEach(key => {
         const val = localStorage.getItem(key);
         if (val !== null) document.getElementById(key).value = val;
@@ -115,16 +111,15 @@
       const glucose = parseFloat(document.getElementById('glucose').value);
       const ratio = parseFloat(localStorage.getItem('ratio') || 20);
       const isf = parseFloat(localStorage.getItem('isf') || 7);
-      const targetLow = parseFloat(document.getElementById('targetLow').value);
-      const targetHigh = parseFloat(document.getElementById('targetHigh').value);
+      const expected = parseFloat(localStorage.getItem('expected') || 6);
 
-      if (isNaN(carbs) || isNaN(ratio) || isNaN(glucose) || isNaN(isf) || isNaN(targetLow) || isNaN(targetHigh)) {
+      if (isNaN(carbs) || isNaN(ratio) || isNaN(glucose) || isNaN(isf) || isNaN(expected)) {
         alert('Please enter valid values.');
         return;
       }
 
       const carbInsulin = carbs / ratio;
-      const correctionInsulin = glucose > targetHigh ? (glucose - targetHigh) / isf : 0;
+      const correctionInsulin = (glucose - expected) / isf;
       const totalInsulin = carbInsulin + correctionInsulin;
       const totalRounded = roundToHalf(totalInsulin);
 
@@ -146,7 +141,7 @@
       localStorage.setItem('mealLog', JSON.stringify(log));
 
       const badge = parseFloat(entry.correctionExact) > 0 ? '<span class="badge">Correction</span>' : '';
-      const hypoAlert = glucose < targetLow ? `⚠️ Glucose is low (${glucose} mmol/L). Consider giving sugar.` : '';
+      const hypoAlert = glucose < expected ? `⚠️ Glucose is low (${glucose} mmol/L). Consider giving sugar.` : '';
 
       document.getElementById('results').innerHTML = `<p><strong>${food || 'Unnamed Item'}</strong>:<br>
         Carbs: ${carbs}g → <strong>${entry.insulinExact}u insulin</strong> (Carbs)<br>

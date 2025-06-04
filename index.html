@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EC Carbbuddy</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; padding: 0; background: #f5f5f5; }
+    h1 { text-align: center; }
+    .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    label { display: block; margin-top: 10px; }
+    input[type="text"], input[type="number"] { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; }
+    button { margin-top: 15px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+    button:hover { background: #45a049; }
+    .log-entry { background: #e7f7e6; margin-top: 10px; padding: 10px; border-radius: 5px; }
+    .small { font-size: 0.85em; color: #555; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>EC Carbbuddy</h1>
+    <label for="food">Food Item</label>
+    <input type="text" id="food" placeholder="e.g., Apple">
+
+    <label for="carbs">Carbs (g)</label>
+    <input type="number" id="carbs" placeholder="e.g., 25">
+
+    <label for="portion">Portion Size</label>
+    <input type="text" id="portion" placeholder="e.g., 1 medium">
+
+    <label for="ratio">Insulin Ratio (g carbs per unit)</label>
+    <input type="number" id="ratio" placeholder="e.g., 20" value="20">
+
+    <button onclick="addMeal()">Add to Log</button>
+
+    <div id="results"></div>
+    <h2>Meal Log</h2>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    function loadLog() {
+      const log = JSON.parse(localStorage.getItem('mealLog') || '[]');
+      const logDiv = document.getElementById('log');
+      logDiv.innerHTML = '';
+      log.forEach(entry => {
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.innerHTML = `<strong>${entry.food || 'Unnamed Item'}</strong> (${entry.portion || 'N/A'})<br>Carbs: ${entry.carbs}g → Insulin: ${entry.insulin}u<br><span class="small">${entry.time}</span>`;
+        logDiv.appendChild(div);
+      });
+    }
+
+    function addMeal() {
+      const food = document.getElementById('food').value.trim();
+      const carbs = parseFloat(document.getElementById('carbs').value);
+      const portion = document.getElementById('portion').value.trim();
+      const ratio = parseFloat(document.getElementById('ratio').value);
+
+      if (isNaN(carbs) || isNaN(ratio) || ratio <= 0) {
+        alert('Please enter carbs and a valid insulin ratio.');
+        return;
+      }
+
+      const insulin = (carbs / ratio).toFixed(1);
+      const time = new Date().toLocaleString();
+      const entry = { food, carbs, portion, insulin, time };
+      const log = JSON.parse(localStorage.getItem('mealLog') || '[]');
+      log.unshift(entry);
+      localStorage.setItem('mealLog', JSON.stringify(log));
+
+      document.getElementById('results').innerHTML = `<p><strong>${food || 'Unnamed Item'}</strong>: ${carbs}g carbs → <strong>${insulin}u insulin</strong> (Ratio: 1u/${ratio}g)</p>`;
+
+      document.getElementById('food').value = '';
+      document.getElementById('carbs').value = '';
+      document.getElementById('portion').value = '';
+
+      loadLog();
+    }
+
+    loadLog();
+  </script>
+</body>
+</html>
